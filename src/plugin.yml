@@ -1,0 +1,9 @@
+name: PlayerTrafficSource
+author: MrMaga
+main: me.mrmaga.playertrafficsource.Main
+version: 1.0
+description: Выясни, откуда игроки узнали о сервере!
+commands:
+  playertrafficsource:
+    description: Основная команда PlayerTrafficSource.
+    aliases: [pts, playerts]
