@@ -3,12 +3,19 @@ Messages:
   Reload: '&f[&6PlayerTrafficSource&f] &aперезагружен!'
   NoPermission: '&cЭта команда недоступна для вас!'
   NoResults: '&cНикто еще не ответил, откуда узнал о сервере!'
+  NoVariantResults: '&cНикто еще не %multiargs%'
   PlayerHasNotAnsweredYet: '&cИгрок &e%player% &cеще не ответил, откуда пришел!'
+  SuccessfulRemoveAnswer: '&aОтвет игрока &e%player% &aуспешно очищен!'
   IncorrectVariant: '&cТакого варианта ответа не существует!'
+  UnknownPage: '&cТакой страницы не существует!'
+  IncorrectPageFormat: '&cСтраница должна быть целым числом, а вы ввели &f%arg%'
+  CurrentPage: '&eСтраница &c%page% &eиз &c%maxpage%&e.'
+  NextPage: '&eДля просмотра следующей страницы введите &b/pts list %type% %next%'
   SuccessfulAnswer: '&aСпасибо за ваш ответ! Вы помогли нам!'
   AlreadyAnswered: '&cВы уже ответили!'
-  Results: '&eРезультаты опроса: '
-  Total: '&bВсего: '
+  Results: '&eРезультаты опроса'
+  Total: '&bВсего'
+  Answered: 'ответил'
   
   # Эти строки будут отправлены игроку до вариантов ответа.
   MessagesBeforeAnswerVariants:
@@ -20,4 +27,6 @@ Messages:
   CommandsHelp:
     reload: '&b/pts reload &e- обновить конфигурацию плагина'
     results: '&b/pts results &e- посмотреть результаты опроса'
-    seen: '&b/pts seen &a<игрок> &e- посмотреть, откуда игрок узнал о сервере'
+    list: '&b/pts list <вариант> [страница] &e- игроки, узнавшие о сервере из этого варианта'
+    seen: '&b/pts seen <игрок> &e- посмотреть, откуда игрок узнал о сервере'
+    remove: '&b/pts remove <игрок> &e- очистить ответ игрока'

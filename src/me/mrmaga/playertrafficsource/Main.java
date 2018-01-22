@@ -53,6 +53,7 @@ public class Main extends JavaPlugin implements Listener {
 					if (sender.hasPermission("playertrafficsource.reload") || sender.hasPermission("playertrafficsource.admin")) {
 					settings.reloadMsg();
 					settings.reloadConfig();
+					settings.reloadData();
 					sender.sendMessage(Methods.color(msg.getString("Messages.Reload")));
 					return true;
 					} else {
@@ -61,7 +62,7 @@ public class Main extends JavaPlugin implements Listener {
 					}
 				} else if (args[0].equalsIgnoreCase("results")) {
 					if (sender.hasPermission("playertrafficsource.results") || sender.hasPermission("playertrafficsource.admin")) {
-						Methods.getResults(sender);
+						Methods.sendResults(sender);
 						return true;
 					} else {
 					sender.sendMessage(Methods.color(msg.getString("Messages.NoPermission")));
@@ -115,6 +116,29 @@ public class Main extends JavaPlugin implements Listener {
 					} else {
 					sender.sendMessage(Methods.color(msg.getString("Messages.NoPermission")));
 					return true;
+					}
+				} else if (args[0].equalsIgnoreCase("remove")) {
+					if (sender.hasPermission("playertrafficsource.remove") || sender.hasPermission("playertrafficsource.admin")) {
+						Methods.removePlayerAnswer(sender, args[1]);
+						return true;
+					} else {
+						sender.sendMessage(Methods.color(msg.getString("Messages.NoPermission")));
+						return true;
+					}
+				} else if (args[0].equalsIgnoreCase("list")) {
+					if (sender.hasPermission("playertrafficsource.list") || sender.hasPermission("playertrafficsource.admin")) {
+						if (args.length == 2) {
+							Methods.sendVariantList(sender, args[1], 1);
+						} else {
+							if (Methods.isInt(args[2])) {
+								Methods.sendVariantList(sender, args[1], Integer.parseInt(args[2]));
+							} else {
+								sender.sendMessage(Methods.color(msg.getString("Messages.IncorrectPageFormat").replaceAll("%arg%", args[2])));
+							}
+						}
+					} else {
+						sender.sendMessage(Methods.color(msg.getString("Messages.NoPermission")));
+						return true;
 					}
 				} else {
 					Methods.sendHelp(sender);

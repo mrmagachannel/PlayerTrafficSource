@@ -1,8 +1,9 @@
 package me.mrmaga.playertrafficsource;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -47,26 +48,18 @@ public class Methods {
 	public static void sendQuestion(Player player) {
 		FileConfiguration msg = Main.settings.getMsg();
 		FileConfiguration config = Main.settings.getConfig();
+		TextComponent[] shouldSend = new TextComponent[getAnswerVariants().size()];
+		int i = 0;
 		for (String s : msg.getStringList("Messages.MessagesBeforeAnswerVariants")) {
 			player.sendMessage(color(s));
 		}
-		Map<String, TextComponent> map = new HashMap<String, TextComponent>();
-		for (String key : getAnswerVariants()) {
-			String str = config.getConfigurationSection("AnswerVariants").getString(key);
-			map.put(key, new TextComponent(color("&c&l⚪&a" + str)));
-		}
-		TextComponent[] shouldSend = new TextComponent[getAnswerVariants().size()];
-		int i = 0;
-		for (String key : getAnswerVariants()) {
-			shouldSend[i] = map.get(key);
-			shouldSend[i].setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/pts answer " + key));
-			shouldSend[i].setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(color("&cНажми, чтобы выбрать &b&l" + config.getConfigurationSection("AnswerVariants").getString(key))).create()));
+		for (String variant : getAnswerVariants()) {
+			shouldSend[i] = new TextComponent(color("&c&l⚪&a" + config.getString("AnswerVariants." + variant)));
+			shouldSend[i].setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/pts answer " + variant));
+			shouldSend[i].setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(color("&cНажми, чтобы выбрать &b&l" + config.getString("AnswerVariants." + variant))).create()));
+			player.spigot().sendMessage(shouldSend[i]);
 			i++;
 		}
-		for (int j = 0; j < shouldSend.length; j++) {
-			player.spigot().sendMessage(shouldSend[j]);
-		}
-		map = null;
 		shouldSend = null;
 	}
 	
@@ -109,55 +102,131 @@ public class Methods {
 		Main.settings.reloadData();
 		FileConfiguration data = Main.settings.getData();
 		FileConfiguration config = Main.settings.getConfig();
+		FileConfiguration msg = Main.settings.getMsg();
 		for (String caseName : getAnsweredPlayers()) {
 			if (caseName.equalsIgnoreCase(name)) {
-				sender.sendMessage(ChatColor.YELLOW + caseName + " " + ChatColor.WHITE + config.getConfigurationSection("AnswerVariants").getString(data.getConfigurationSection("AnsweredPlayers").getString(caseName)));
+				sender.sendMessage(ChatColor.YELLOW + caseName + " " + ChatColor.WHITE + msg.getString("Messages.Answered") + " \"" + ChatColor.GREEN + config.getString("AnswerVariants." + data.getString("AnsweredPlayers." + caseName)) + ChatColor.WHITE + "\"");
 			}
 		}
 	}
 	
-	public static void getResults(CommandSender sender) {
+	public static void removePlayerAnswer(CommandSender sender, String name) {
 		Main.settings.reloadData();
 		FileConfiguration data = Main.settings.getData();
 		FileConfiguration msg = Main.settings.getMsg();
-		Integer i = 0;
-		boolean needGet = true;
-		try{
-			data.getConfigurationSection("AnsweredPlayers").getKeys(false);
-		} catch (NullPointerException e) {
-			needGet = false;
+		boolean isSuccessful = false;
+		if (getAnsweredPlayers() != null) {
+			for (String key : getAnsweredPlayers()) {
+				if (key.equalsIgnoreCase(name)) {
+					data.set("AnsweredPlayers." + key, null);
+					Main.settings.saveData();
+					isSuccessful = true;
+				}
+			}
 		}
-		if (needGet) {
-			Map<String, Integer> map = new HashMap<String, Integer>();
-			for (String s : getAnswerVariants()) {
-				for (String key : data.getConfigurationSection("AnsweredPlayers").getKeys(false)) {
-					if (data.getConfigurationSection("AnsweredPlayers").getString(key).equalsIgnoreCase(s)) {
-						i++;
-						map.put(s, i);
+		if (isSuccessful) {
+			sender.sendMessage(color(msg.getString("Messages.SuccessfulRemoveAnswer").replaceAll("%player%", name)));
+		} else {
+			sender.sendMessage(color(msg.getString("Messages.PlayerHasNotAnsweredYet").replaceAll("%player%", name)));
+		}
+	}
+	
+	public static int getVariantCount(String variant) {
+		if (getAnsweredPlayers() != null) {
+			FileConfiguration data = Main.settings.getData();
+			if (containsIgnoreCase(variant, getAnswerVariants())) {
+				int count = 0;
+				for (String key : getAnsweredPlayers()) {
+					if (data.getString("AnsweredPlayers." + key).equalsIgnoreCase(variant)) {
+						count++;
 					}
 				}
-				i = 0;
+				return count;
+			} else {
+				return -1;
 			}
-			sender.sendMessage(color(msg.getString("Messages.Results")));
-			for (String s : getAnswerVariants()) {
-				int count;
-				int percent;
-				if (map.get(s) == null) {
-					count = 0;
-				} else {
-					count = map.get(s);
-				}
-				if (getAnsweredPlayers().size() > 0) {
-					percent = (count*100)/getAnsweredPlayers().size();
-				} else {
-					percent = 0;
-				}
-				sender.sendMessage(ChatColor.GREEN + s + ChatColor.GREEN + ": " + ChatColor.WHITE +  count + " - " + ChatColor.RED + percent + "%");
-			}
-			sender.sendMessage(color(msg.getString("Messages.Total") + ChatColor.WHITE + getAnsweredPlayers().size()));
-			map = null;
 		} else {
+			return -2;
+		}
+	}
+	
+	public static void sendResults(CommandSender sender) {
+		Main.settings.reloadData();
+		FileConfiguration msg = Main.settings.getMsg();
+		if (getAnsweredPlayers() == null) {
 			sender.sendMessage(color(msg.getString("Messages.NoResults")));
+		} else {
+			sender.sendMessage(color(msg.getString("Messages.Results") + ": "));
+			for (String variant : getAnswerVariants()) {
+				int count = getVariantCount(variant);
+				int percent;
+				if (count == 0) {
+					percent = 0;
+				} else {
+					percent = (count*100)/getAnsweredPlayers().size();
+				}
+				sender.sendMessage(ChatColor.GREEN + variant + ChatColor.GREEN + ": " + ChatColor.WHITE + count + " - " + ChatColor.RED + percent + "%");
+			}
+			sender.sendMessage(color(msg.getString("Messages.Total") + ": " + ChatColor.WHITE + getAnsweredPlayers().size()));
+		}
+	}
+	
+	public static void sendVariantList(CommandSender sender, String variant, int page) {
+		Main.settings.reloadData();
+		FileConfiguration msg = Main.settings.getMsg();
+		FileConfiguration config = Main.settings.getConfig();
+		int count = getVariantCount(variant);
+		int number = config.getInt("PlayerOnOnePage");
+		int maxPage = count%number == 0 ? count/number : count/number + 1;
+		if (count == -2) {
+			sender.sendMessage(color(msg.getString("Messages.NoResults")));
+		} else if (count == -1) {
+			sender.sendMessage(color(msg.getString("Messages.IncorrectVariant")));
+		} else {
+			if (page > maxPage || page <= 0) {
+				sender.sendMessage(color(msg.getString("Messages.UnknownPage")));
+			} else {
+				TreeSet<String> players = new TreeSet<String>();
+				for (String s : Methods.getAnsweredPlayers()) {
+					if (Main.settings.getData().getString("AnsweredPlayers." + s).equalsIgnoreCase(variant)) {
+						players.add(s);
+					}	
+				}
+				sender.sendMessage(ChatColor.WHITE + "Игроки, которые ответили \"" + ChatColor.YELLOW + config.getString("AnswerVariants." + variant.toLowerCase()) + ChatColor.WHITE + "\"");
+				sender.sendMessage("");
+				StringBuilder list = new StringBuilder();
+				for (int i = (page-1)*number; i < (page==maxPage ? count : (page*number)); i++) {
+					list.append(ChatColor.GREEN + "" + (getNth(players, i)));
+					if (i < (page==maxPage ? count-1 : (page*number)-1)) {
+						list.append(ChatColor.WHITE + ", ");
+					} else {
+						if (page < maxPage) {
+							list.append(ChatColor.WHITE + "...");
+						} else {
+							list.append(ChatColor.WHITE + ".");
+						}
+					}
+				}
+				sender.sendMessage(list.toString());
+				sender.sendMessage("");
+				sender.sendMessage(color(msg.getString("Messages.CurrentPage")
+						.replaceAll("%page%", page+"").replaceAll("%maxpage%", maxPage+"")));
+				if (page < maxPage) {
+					sender.sendMessage(color(msg.getString("Messages.NextPage")
+							.replaceAll("%type%", variant+"").replaceAll("%next%", page+1+"")));
+				}	
+				players = null;
+				list = null;
+			}
+		}
+	}
+	
+	public static String getNth(TreeSet<String> treeset, int n) {
+		List<String> list = new ArrayList<String>(treeset);
+		if (list.size()-1 >= n) {
+			return list.get(n);
+		} else {
+			return list.get(list.size()-1);
 		}
 	}
 	
@@ -183,8 +252,17 @@ public class Methods {
 		FileConfiguration msg = Main.settings.getMsg();
 		for (String key : msg.getConfigurationSection("Messages.CommandsHelp").getKeys(false)) {
 			if (sender.hasPermission("playertrafficsource." + key) || sender.hasPermission("playertrafficsource.admin")) {
-				sender.sendMessage(color(msg.getConfigurationSection("Messages.CommandsHelp").getString(key)));
+				sender.sendMessage(color(msg.getString("Messages.CommandsHelp." + key)));
 			}
+		}
+	}
+	
+	public static boolean isInt(String s) {
+		try {
+			Integer.parseInt(s);
+			return true;
+		} catch (NumberFormatException nfe) {
+			return false;
 		}
 	}
 }
