@@ -1,7 +1,7 @@
 name: PlayerTrafficSource
 author: MrMaga
 main: me.mrmaga.playertrafficsource.Main
-version: 1.1
+version: 1.2
 description: Выясни, откуда игроки узнали о сервере!
 commands:
   playertrafficsource:

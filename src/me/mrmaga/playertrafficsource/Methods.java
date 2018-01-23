@@ -230,6 +230,17 @@ public class Methods {
 		}
 	}
 	
+	public static List<String> getCommandArgs(CommandSender sender) {
+		List<String> args = new ArrayList<>();
+		FileConfiguration msg = Main.settings.getMsg();
+		for (String cmd : msg.getConfigurationSection("Messages.CommandsHelp").getKeys(false)) {
+			if (sender.hasPermission("playertrafficsource." + cmd) || sender.hasPermission("playertrafficsource.admin")) {
+				args.add(cmd);
+			}
+		}
+		return args;
+	}
+	
 	public static Set<String> getAnswerVariants() {
 		FileConfiguration config = Main.settings.getConfig();
 		try {

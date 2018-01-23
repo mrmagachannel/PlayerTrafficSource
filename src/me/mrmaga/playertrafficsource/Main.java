@@ -1,9 +1,15 @@
 package me.mrmaga.playertrafficsource;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
+import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabCompleter;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -11,14 +17,16 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
-public class Main extends JavaPlugin implements Listener {
+public class Main extends JavaPlugin implements Listener, CommandExecutor, TabCompleter {
 	
 	public static Settings settings = new Settings();
+	public static List<String> args1 = new ArrayList<>();
 	
 	@Override
 	public void onEnable() {
 		settings.setup(this);
 		getCommand("playertrafficsource").setExecutor(this);
+		getCommand("playertrafficsource").setTabCompleter(this);
 		Bukkit.getPluginManager().registerEvents(this, this);;
 	}
 	
@@ -67,6 +75,10 @@ public class Main extends JavaPlugin implements Listener {
 					} else {
 					sender.sendMessage(Methods.color(msg.getString("Messages.NoPermission")));
 					return true;
+					}
+				} else if (args[0].equalsIgnoreCase("seen") || args[0].equalsIgnoreCase("remove") || args[0].equalsIgnoreCase("list")) {
+					if (sender.hasPermission("playertrafficsource." + args[0]) || sender.hasPermission("playertrafficsource.admin")) {
+						sender.sendMessage(Methods.color(msg.getString("Messages.CommandsHelp." + args[0])));
 					}
 				} else {
 					Methods.sendHelp(sender);
@@ -149,4 +161,41 @@ public class Main extends JavaPlugin implements Listener {
 		return false;
 	}
 	
+	@Override
+	public List<String> onTabComplete(CommandSender sender, Command cmd, String label, String[] args) {
+		if (cmd.getName().equalsIgnoreCase("playertrafficsource")) {
+			List<String> result = new ArrayList<>();
+			if (args.length == 1) {
+				if (!args[0].equals("")) {
+					for (String arg : Methods.getCommandArgs(sender)) {
+						if (arg.toLowerCase().startsWith(args[0].toLowerCase())) {
+							result.add(arg);
+						}
+					}
+				} else {
+					for (String arg : Methods.getCommandArgs(sender)) {
+						result.add(arg);
+					}
+				}
+			}
+			if (args.length == 2) {
+				if (args[0].equalsIgnoreCase("answer") || args[0].equalsIgnoreCase("list")) {
+					if (!args[1].equals("")) {
+						for (String var : Methods.getAnswerVariants()) {
+							if (var.toLowerCase().startsWith(args[1].toLowerCase())) {
+								result.add(var);
+							}
+						}
+					} else {
+						for (String var : Methods.getAnswerVariants()) {
+							result.add(var);
+						}
+					}
+				}
+			}
+			Collections.sort(result);
+			return result;
+		}
+		return null;
+	}
 }
