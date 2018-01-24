@@ -1,2 +1,2 @@
-# PlayerTrafficSource v1.1
+# PlayerTrafficSource v1.2
 Откуда игроку узнают о вашем сервере?
